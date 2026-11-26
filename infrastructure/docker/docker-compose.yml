@@ -1,0 +1,17 @@
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: developer-portal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: developer_portal
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: devportal_local
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

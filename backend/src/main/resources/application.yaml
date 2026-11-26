@@ -1,0 +1,29 @@
+
+spring:
+  application:
+    name: developer-portal
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/developer_portal
+    username: developer
+    password: devportal_local
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+github:
+  api:
+    base-url: https://api.github.com
+  token: ${GITHUB_TOKEN:}

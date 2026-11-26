@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: automated-developer-portal
+  description: Automated developer portal for GitHub repository discovery and service catalogue management
+  tags:
+    - spring-boot
+    - developer-portal
+    - automation
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
