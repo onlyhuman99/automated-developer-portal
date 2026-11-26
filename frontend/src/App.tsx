@@ -14,8 +14,9 @@ import {
   Users,
   Layers3,
   RefreshCw,
-  ExternalLink,
+  ExternalLink
 } from 'lucide-react'
+import RepositoriesPage from './RepositoriesPage'
 import './App.css'
 
 type Statistics = {
@@ -45,6 +46,10 @@ function App() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [lifecycleFilter, setLifecycleFilter] = useState('ALL')
+
+  const [activePage, setActivePage] = useState<'overview' | 'repositories'>(
+    'overview',
+  )
 
   async function loadStatistics() {
     try {
@@ -148,17 +153,39 @@ function App() {
         <div className="nav-section">
           <span className="nav-heading">WORKSPACE</span>
 
-          <a className="nav-link active" href="#overview">
+          <a
+            className={`nav-link ${activePage === 'overview' ? 'active' : ''}`}
+            href="#overview"
+            onClick={(event) => {
+              event.preventDefault()
+              setActivePage('overview')
+            }}
+          >
             <LayoutDashboard size={18} />
             <span>Overview</span>
           </a>
 
-          <a className="nav-link" href="#catalogue">
+          <a
+            className="nav-link"
+            href="#catalogue"
+            onClick={(event) => {
+              event.preventDefault()
+              setActivePage('overview')
+              document.getElementById('catalogue')?.scrollIntoView()
+            }}
+          >
             <Box size={18} />
             <span>Service catalogue</span>
           </a>
 
-          <a className="nav-link" href="#repositories">
+          <a
+            className={`nav-link ${activePage === 'repositories' ? 'active' : ''}`}
+            href="#repositories"
+            onClick={(event) => {
+              event.preventDefault()
+              setActivePage('repositories')
+            }}
+          >
             <GitBranch size={18} />
             <span>Repositories</span>
           </a>
@@ -208,7 +235,10 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumb">
-            Workspace <span>/</span> <strong>Overview</strong>
+            Workspace <span>/</span>
+            <strong>
+              {activePage === 'overview' ? 'Overview' : 'Repositories'}
+            </strong>
           </div>
 
           <div className="topbar-actions">
@@ -232,297 +262,302 @@ function App() {
           </div>
         </header>
 
-        <div className="dashboard-content" id="overview">
-          <section className="page-heading">
-            <div>
-              <span className="eyebrow">DEVELOPER WORKSPACE</span>
-              <h1>Overview</h1>
-              <p>
-                Monitor your services, repositories, and engineering
-                ownership in one place.
-              </p>
-            </div>
-
-            <button
-              className="refresh-button"
-              onClick={refreshDashboard}
-              disabled={loading || catalogueLoading}
-            >
-              <RefreshCw
-                size={16}
-                className={
-                  loading || catalogueLoading ? 'spinning' : ''
-                }
-              />
-              Refresh data
-            </button>
-          </section>
-
-          {error && (
-            <div className="error-banner">
-              <span>{error}</span>
-              <button onClick={() => void loadStatistics()}>
-                Try again
-              </button>
-            </div>
-          )}
-
-          <section className="stats-grid">
-            <StatCard
-              label="Total services"
-              value={statistics?.totalServices}
-              loading={loading}
-              icon={<Box size={19} />}
-              description="Registered in catalogue"
-            />
-
-            <StatCard
-              label="Production"
-              value={statistics?.servicesByLifecycle?.PRODUCTION}
-              loading={loading}
-              icon={<Activity size={19} />}
-              description="Live services"
-              accent="green"
-            />
-
-            <StatCard
-              label="Experimental"
-              value={statistics?.servicesByLifecycle?.EXPERIMENTAL}
-              loading={loading}
-              icon={<Code2 size={19} />}
-              description="Under development"
-              accent="blue"
-            />
-
-            <StatCard
-              label="Deprecated"
-              value={statistics?.servicesByLifecycle?.DEPRECATED}
-              loading={loading}
-              icon={<Layers3 size={19} />}
-              description="Marked for retirement"
-              accent="orange"
-            />
-          </section>
-
-          <section className="analytics-grid">
-            <div className="panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>Lifecycle distribution</h2>
-                  <p>Services grouped by lifecycle status</p>
-                </div>
-                <span className="panel-icon">
-                  <Activity size={18} />
-                </span>
+        {activePage === 'overview' ? (
+          <div className="dashboard-content" id="overview">
+            <section className="page-heading">
+              <div>
+                <span className="eyebrow">DEVELOPER WORKSPACE</span>
+                <h1>Overview</h1>
+                <p>
+                  Monitor your services, repositories, and engineering
+                  ownership in one place.
+                </p>
               </div>
 
-              <div className="lifecycle-list">
-                <LifecycleRow
-                  label="Production"
-                  count={production}
-                  total={statistics?.totalServices ?? 0}
-                  color="green"
-                />
-
-                <LifecycleRow
-                  label="Experimental"
-                  count={experimental}
-                  total={statistics?.totalServices ?? 0}
-                  color="blue"
-                />
-
-                <LifecycleRow
-                  label="Deprecated"
-                  count={deprecated}
-                  total={statistics?.totalServices ?? 0}
-                  color="orange"
-                />
-              </div>
-            </div>
-
-            <div className="panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>Services by owner</h2>
-                  <p>Distribution across engineering teams</p>
-                </div>
-                <span className="panel-icon">
-                  <Users size={18} />
-                </span>
-              </div>
-
-              {loading ? (
-                <div className="empty-state">
-                  Loading ownership data...
-                </div>
-              ) : ownerEntries.length === 0 ? (
-                <div className="empty-state">
-                  No ownership data available.
-                </div>
-              ) : (
-                <div className="owner-list">
-                  {ownerEntries.map(([owner, count]) => (
-                    <div className="owner-row" key={owner}>
-                      <div className="owner-label">
-                        <span className="owner-dot" />
-                        <span>{owner}</span>
-                        <strong>{count}</strong>
-                      </div>
-
-                      <div className="progress-track">
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${(count / maxOwnerCount) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section
-            className="panel catalogue-panel"
-            id="catalogue"
-          >
-            <div className="catalogue-heading">
-              <div className="panel-heading">
-                <div>
-                  <h2>Service catalogue</h2>
-                  <p>
-                    Your registered software components
-                    {!catalogueLoading && ` · ${filteredServices.length} services`}
-                  </p>
-                </div>
-
-                <span className="catalogue-note">
-                  <Box size={15} />
-                  Live catalogue data
-                </span>
-              </div>
-
-              <div className="catalogue-filters">
-                <label className="catalogue-filter-search">
-                  <Search size={16} />
-                  <input
-                    type="search"
-                    placeholder="Search name, description or owner..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                  />
-                </label>
-
-                <select
-                  aria-label="Filter by lifecycle"
-                  value={lifecycleFilter}
-                  onChange={(event) =>
-                    setLifecycleFilter(event.target.value)
+              <button
+                className="refresh-button"
+                onClick={refreshDashboard}
+                disabled={loading || catalogueLoading}
+              >
+                <RefreshCw
+                  size={16}
+                  className={
+                    loading || catalogueLoading ? 'spinning' : ''
                   }
-                >
-                  <option value="ALL">All lifecycles</option>
-                  <option value="PRODUCTION">Production</option>
-                  <option value="EXPERIMENTAL">Experimental</option>
-                  <option value="DEPRECATED">Deprecated</option>
-                </select>
-              </div>
-            </div>
+                />
+                Refresh data
+              </button>
+            </section>
 
-            {catalogueLoading ? (
-              <div className="catalogue-message">
-                Loading services...
-              </div>
-            ) : catalogueError ? (
-              <div className="catalogue-message catalogue-error">
-                <strong>Unable to load the service catalogue.</strong>
-                <span>{catalogueError}</span>
-                <button onClick={() => void loadServices()}>
+            {error && (
+              <div className="error-banner">
+                <span>{error}</span>
+                <button onClick={() => void loadStatistics()}>
                   Try again
                 </button>
               </div>
-            ) : filteredServices.length === 0 ? (
-              <div className="catalogue-message">
-                <div className="placeholder-icon">
-                  <Box size={24} />
-                </div>
-                <strong>
-                  {services.length === 0
-                    ? 'No services registered'
-                    : 'No matching services'}
-                </strong>
-                <span>
-                  {services.length === 0
-                    ? 'Add a service through the catalogue API or synchronize your GitHub repositories.'
-                    : 'Try changing your search or lifecycle filter.'}
-                </span>
-              </div>
-            ) : (
-              <div className="catalogue-table-wrapper">
-                <table className="catalogue-table">
-                  <thead>
-                    <tr>
-                      <th>Service</th>
-                      <th>Owner</th>
-                      <th>Lifecycle</th>
-                      <th>Repository</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredServices.map((service) => (
-                      <tr key={service.id}>
-                        <td>
-                          <div className="service-name">
-                            <strong>{service.name}</strong>
-                            <span>
-                              {service.description || 'No description provided'}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td>
-                          <span className="service-owner">
-                            <Users size={14} />
-                            {service.owner}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span
-                            className={`lifecycle-badge ${service.lifecycle.toLowerCase()}`}
-                          >
-                            {service.lifecycle.charAt(0) +
-                              service.lifecycle.slice(1).toLowerCase()}
-                          </span>
-                        </td>
-
-                        <td>
-                          <a
-                            className="repository-link"
-                            href={service.repositoryUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`Open ${service.name} repository`}
-                          >
-                            GitHub
-                            <ExternalLink size={14} />
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             )}
-          </section>
 
-          <footer className="dashboard-footer">
-            <span>DevPortal · Developer workspace</span>
-            <span>Data provided by your Spring Boot backend</span>
-          </footer>
-        </div>
+            <section className="stats-grid">
+              <StatCard
+                label="Total services"
+                value={statistics?.totalServices}
+                loading={loading}
+                icon={<Box size={19} />}
+                description="Registered in catalogue"
+              />
+
+              <StatCard
+                label="Production"
+                value={statistics?.servicesByLifecycle?.PRODUCTION}
+                loading={loading}
+                icon={<Activity size={19} />}
+                description="Live services"
+                accent="green"
+              />
+
+              <StatCard
+                label="Experimental"
+                value={statistics?.servicesByLifecycle?.EXPERIMENTAL}
+                loading={loading}
+                icon={<Code2 size={19} />}
+                description="Under development"
+                accent="blue"
+              />
+
+              <StatCard
+                label="Deprecated"
+                value={statistics?.servicesByLifecycle?.DEPRECATED}
+                loading={loading}
+                icon={<Layers3 size={19} />}
+                description="Marked for retirement"
+                accent="orange"
+              />
+            </section>
+
+            <section className="analytics-grid">
+              <div className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Lifecycle distribution</h2>
+                    <p>Services grouped by lifecycle status</p>
+                  </div>
+                  <span className="panel-icon">
+                    <Activity size={18} />
+                  </span>
+                </div>
+
+                <div className="lifecycle-list">
+                  <LifecycleRow
+                    label="Production"
+                    count={production}
+                    total={statistics?.totalServices ?? 0}
+                    color="green"
+                  />
+
+                  <LifecycleRow
+                    label="Experimental"
+                    count={experimental}
+                    total={statistics?.totalServices ?? 0}
+                    color="blue"
+                  />
+
+                  <LifecycleRow
+                    label="Deprecated"
+                    count={deprecated}
+                    total={statistics?.totalServices ?? 0}
+                    color="orange"
+                  />
+                </div>
+              </div>
+
+              <div className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Services by owner</h2>
+                    <p>Distribution across engineering teams</p>
+                  </div>
+                  <span className="panel-icon">
+                    <Users size={18} />
+                  </span>
+                </div>
+
+                {loading ? (
+                  <div className="empty-state">
+                    Loading ownership data...
+                  </div>
+                ) : ownerEntries.length === 0 ? (
+                  <div className="empty-state">
+                    No ownership data available.
+                  </div>
+                ) : (
+                  <div className="owner-list">
+                    {ownerEntries.map(([owner, count]) => (
+                      <div className="owner-row" key={owner}>
+                        <div className="owner-label">
+                          <span className="owner-dot" />
+                          <span>{owner}</span>
+                          <strong>{count}</strong>
+                        </div>
+
+                        <div className="progress-track">
+                          <div
+                            className="progress-fill"
+                            style={{
+                              width: `${(count / maxOwnerCount) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="panel catalogue-panel" id="catalogue">
+              <div className="catalogue-heading">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Service catalogue</h2>
+                    <p>
+                      Your registered software components
+                      {!catalogueLoading &&
+                        ` · ${filteredServices.length} services`}
+                    </p>
+                  </div>
+
+                  <span className="catalogue-note">
+                    <Box size={15} />
+                    Live catalogue data
+                  </span>
+                </div>
+
+                <div className="catalogue-filters">
+                  <label className="catalogue-filter-search">
+                    <Search size={16} />
+                    <input
+                      type="search"
+                      placeholder="Search name, description or owner..."
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                    />
+                  </label>
+
+                  <select
+                    aria-label="Filter by lifecycle"
+                    value={lifecycleFilter}
+                    onChange={(event) =>
+                      setLifecycleFilter(event.target.value)
+                    }
+                  >
+                    <option value="ALL">All lifecycles</option>
+                    <option value="PRODUCTION">Production</option>
+                    <option value="EXPERIMENTAL">Experimental</option>
+                    <option value="DEPRECATED">Deprecated</option>
+                  </select>
+                </div>
+              </div>
+
+              {catalogueLoading ? (
+                <div className="catalogue-message">
+                  Loading services...
+                </div>
+              ) : catalogueError ? (
+                <div className="catalogue-message catalogue-error">
+                  <strong>Unable to load the service catalogue.</strong>
+                  <span>{catalogueError}</span>
+                  <button onClick={() => void loadServices()}>
+                    Try again
+                  </button>
+                </div>
+              ) : filteredServices.length === 0 ? (
+                <div className="catalogue-message">
+                  <div className="placeholder-icon">
+                    <Box size={24} />
+                  </div>
+                  <strong>
+                    {services.length === 0
+                      ? 'No services registered'
+                      : 'No matching services'}
+                  </strong>
+                  <span>
+                    {services.length === 0
+                      ? 'Add a service through the catalogue API or synchronize your GitHub repositories.'
+                      : 'Try changing your search or lifecycle filter.'}
+                  </span>
+                </div>
+              ) : (
+                <div className="catalogue-table-wrapper">
+                  <table className="catalogue-table">
+                    <thead>
+                      <tr>
+                        <th>Service</th>
+                        <th>Owner</th>
+                        <th>Lifecycle</th>
+                        <th>Repository</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filteredServices.map((service) => (
+                        <tr key={service.id}>
+                          <td>
+                            <div className="service-name">
+                              <strong>{service.name}</strong>
+                              <span>
+                                {service.description ||
+                                  'No description provided'}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td>
+                            <span className="service-owner">
+                              <Users size={14} />
+                              {service.owner}
+                            </span>
+                          </td>
+
+                          <td>
+                            <span
+                              className={`lifecycle-badge ${service.lifecycle.toLowerCase()}`}
+                            >
+                              {service.lifecycle.charAt(0) +
+                                service.lifecycle.slice(1).toLowerCase()}
+                            </span>
+                          </td>
+
+                          <td>
+                            <a
+                              className="repository-link"
+                              href={service.repositoryUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`Open ${service.name} repository`}
+                            >
+                              GitHub
+                              <ExternalLink size={14} />
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <footer className="dashboard-footer">
+              <span>DevPortal · Developer workspace</span>
+              <span>Data provided by your Spring Boot backend</span>
+            </footer>
+          </div>
+        ) : (
+          <div className="dashboard-content">
+            <RepositoriesPage />
+          </div>
+        )}
       </main>
     </div>
   )
