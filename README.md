@@ -30,7 +30,6 @@ The portal provides a dashboard for viewing service information, lifecycle distr
 | Web server | Nginx |
 
 ## Architecture
-
 ```text
                  GitHub REST API
                        |
