@@ -1,7 +1,6 @@
 # Automated Developer Portal
 
 A centralized developer portal that discovers GitHub repositories, reads service metadata from `catalog-info.yaml`, and synchronizes registered services into a searchable service catalogue.
-
 The portal provides a dashboard for viewing service information, lifecycle distribution, and engineering ownership.
 ## Features
 
